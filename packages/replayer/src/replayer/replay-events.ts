@@ -1,9 +1,12 @@
 import {
   METICULOUS_LOGGER_NAME,
   ReplayEventsFn,
+  getMeticulousLocalDataDir,
 } from "@alwaysmeticulous/common";
+
 import log from "loglevel";
 import { DateTime } from "luxon";
+import { join } from "path";
 import puppeteer, { Browser } from "puppeteer";
 import type { event } from "rrweb/typings/types";
 import {
@@ -20,6 +23,7 @@ import {
 } from "./replay.utils";
 import { takeScreenshot } from "./screenshot.utils";
 
+const COOKIE_FILENAME = "cookies.json";
 export const replayEvents: ReplayEventsFn = async (options) => {
   const {
     appUrl,
@@ -37,6 +41,7 @@ export const replayEvents: ReplayEventsFn = async (options) => {
     moveBeforeClick,
     cookies,
     cookiesFile,
+    incognito,
   } = options;
 
   const logger = log.getLogger(METICULOUS_LOGGER_NAME);
@@ -60,7 +65,9 @@ export const replayEvents: ReplayEventsFn = async (options) => {
       devtools: devTools || false,
     }));
 
-  const context = await browser.createIncognitoBrowserContext();
+  const context = incognito
+    ? await browser.createIncognitoBrowserContext()
+    : browser.defaultBrowserContext();
 
   (await browser.defaultBrowserContext().pages()).forEach((page) =>
     page.close().catch((error) => {
@@ -122,8 +129,14 @@ export const replayEvents: ReplayEventsFn = async (options) => {
   });
   page.coverage.startJSCoverage();
 
-  if (cookies || cookiesFile) {
+  const cookiesSpecified = cookies || cookiesFile;
+  const isNotIncognito = !incognito;
+  if (cookiesSpecified) {
     await setupPageCookies({ page, cookies: cookies || [], cookiesFile });
+  } else if (isNotIncognito) {
+    const cookieDir = join(getMeticulousLocalDataDir(), "cookies");
+    const cookiesFile = join(cookieDir, COOKIE_FILENAME);
+    await setupPageCookies({ page, cookies: [], cookiesFile });
   }
 
   // Navigate to the URL that the session originated on/from.

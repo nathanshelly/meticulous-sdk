@@ -36,6 +36,7 @@ export interface ReplayEventsOptions {
   moveBeforeClick: boolean;
   cookies: Record<string, any>[] | null;
   cookiesFile: string;
+  incognito?: boolean | null | undefined;
 }
 
 export type ReplayEventsFn = (options: ReplayEventsOptions) => Promise<{

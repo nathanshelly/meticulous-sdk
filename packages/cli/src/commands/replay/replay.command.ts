@@ -57,6 +57,7 @@ export interface ReplayCommandHandlerOptions {
   moveBeforeClick?: boolean | null | undefined;
   cookies?: Record<string, any>[];
   cookiesFile?: string | null | undefined;
+  incognito?: boolean | null | undefined;
 }
 
 export const replayCommandHandler: (
@@ -81,6 +82,7 @@ export const replayCommandHandler: (
   moveBeforeClick,
   cookies,
   cookiesFile,
+  incognito,
 }) => {
   const logger = log.getLogger(METICULOUS_LOGGER_NAME);
 
@@ -171,6 +173,7 @@ export const replayCommandHandler: (
     moveBeforeClick: moveBeforeClick || false,
     cookies: cookies || null,
     cookiesFile: cookiesFile || "",
+    incognito,
   };
   await writeFile(
     join(tempDir, "replayEventsParams.json"),
@@ -369,6 +372,11 @@ export const replay: CommandModule<unknown, ReplayCommandHandlerOptions> = {
     cookiesFile: {
       string: true,
       description: "Path to cookies to inject before replay",
+    },
+    incognito: {
+      boolean: true,
+      description: "Use an incognito browsing context",
+      default: true,
     },
   },
   handler: wrapHandler(handler),
